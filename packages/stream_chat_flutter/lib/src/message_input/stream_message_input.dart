@@ -849,6 +849,8 @@ class StreamMessageInputState extends State<StreamMessageInput>
     final attachments = await showStreamAttachmentPickerModalBottomSheet(
       context: context,
       onError: widget.onError,
+      controller: StreamAttachmentPickerController(
+          maxAttachmentSize: widget.maxAttachmentSize),
       allowedTypes: widget.allowedAttachmentPickerTypes,
       initialAttachments: _effectiveController.attachments,
     );
