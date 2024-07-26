@@ -14,7 +14,11 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  stream_chat_flutter: ^8.0.0
+  stream_chat_flutter: 
+    git: 
+      url: git@github.com:LifesparkHealth/stream-chat-flutter.git
+      ref: master
+      path: packages/stream_chat_flutter
 
 dev_dependencies:
   flutter_test:
