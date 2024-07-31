@@ -420,16 +420,8 @@ class Channel {
     String? reason,
   }) {
     final cancelToken = _cancelableAttachmentUploadRequest[attachmentId];
-    if (cancelToken == null) {
-      throw const StreamChatError(
-        "Upload request for this Attachment hasn't started yet or maybe "
-        'Already completed',
-      );
-    }
-    if (cancelToken.isCancelled) {
-      throw const StreamChatError('Upload request already cancelled');
-    }
-    cancelToken.cancel(reason);
+
+    _client.cancelAttachmentUpload(attachmentId, reason, cancelToken);
   }
 
   /// Retries the failed [attachmentId] upload request.
@@ -502,19 +494,26 @@ class Channel {
       final isImage = it.type == AttachmentType.image;
       final cancelToken = CancelToken();
       Future<SendAttachmentResponse> future;
+
+      final updatedExtraData = Map<String, Object?>.from(it.extraData ?? {});
+
+      // Add the attachmentId if it's not already present.
+      // Used to be able to correlate the attachment with the message.
+      updatedExtraData.putIfAbsent('attachmentId', () => it.id);
+
       if (isImage) {
         future = sendImage(
           it.file!,
           onSendProgress: onSendProgress,
           cancelToken: cancelToken,
-          extraData: it.extraData,
+          extraData: updatedExtraData,
         );
       } else {
         future = sendFile(
           it.file!,
           onSendProgress: onSendProgress,
           cancelToken: cancelToken,
-          extraData: it.extraData,
+          extraData: updatedExtraData,
         );
       }
       _cancelableAttachmentUploadRequest[it.id] = cancelToken;
@@ -971,6 +970,7 @@ class Channel {
     Map<String, Object?>? extraData,
   }) {
     _checkInitialized();
+
     return _client.sendImage(
       file,
       id!,

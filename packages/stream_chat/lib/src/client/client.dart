@@ -806,6 +806,12 @@ class StreamChatClient {
         messageFilters: messageFilters,
       );
 
+  Future<bool> cancelAttachmentUpload(
+      String attachmentId, String? reason, CancelToken? cancelToken) {
+    return _chatApi.fileUploader
+        .cancelAttachmentUpload(attachmentId, reason, cancelToken);
+  }
+
   /// Send a [file] to the [channelId] of type [channelType]
   Future<SendFileResponse> sendFile(
     AttachmentFile file,
@@ -826,13 +832,10 @@ class StreamChatClient {
 
   /// Send a [image] to the [channelId] of type [channelType]
   Future<SendImageResponse> sendImage(
-    AttachmentFile image,
-    String channelId,
-    String channelType, {
-    ProgressCallback? onSendProgress,
-    CancelToken? cancelToken,
-    Map<String, Object?>? extraData,
-  }) =>
+          AttachmentFile image, String channelId, String channelType,
+          {ProgressCallback? onSendProgress,
+          CancelToken? cancelToken,
+          Map<String, Object?>? extraData}) =>
       _chatApi.fileUploader.sendImage(
         image,
         channelId,

@@ -61,6 +61,9 @@ abstract class AttachmentFileUploader {
     CancelToken? cancelToken,
     Map<String, Object?>? extraData,
   });
+
+  Future<bool> cancelAttachmentUpload(
+      String attachmentId, String? reason, CancelToken? cancelToken);
 }
 
 /// Stream's default implementation of [AttachmentFileUploader]
@@ -138,5 +141,15 @@ class StreamAttachmentFileUploader implements AttachmentFileUploader {
       cancelToken: cancelToken,
     );
     return EmptyResponse.fromJson(response.data);
+  }
+
+  @override
+  Future<bool> cancelAttachmentUpload(
+      String attachmentId, String? reason, CancelToken? cancelToken) {
+    if (cancelToken != null && !cancelToken.isCancelled) {
+      cancelToken.cancel(reason);
+      return Future.value(true);
+    }
+    return Future.value(false);
   }
 }
