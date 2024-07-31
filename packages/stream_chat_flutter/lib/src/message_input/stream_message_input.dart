@@ -434,6 +434,9 @@ class StreamMessageInputState extends State<StreamMessageInput>
       widget.messageInputController ?? _controller!.value;
   StreamRestorableMessageInputController? _controller;
 
+  // Added so attachments are removed right away when the message has been updated
+  List<Attachment> _attachmentsToRemove = [];
+
   void _createLocalController([Message? message]) {
     assert(_controller == null, '');
     _controller = StreamRestorableMessageInputController(message: message);
@@ -856,6 +859,8 @@ class StreamMessageInputState extends State<StreamMessageInput>
     );
 
     if (attachments != null) {
+      //if we have any attachments, delete them
+      await _deleteAttachments(_effectiveController.attachments);
       _effectiveController.attachments = attachments;
     }
   }
@@ -1278,6 +1283,14 @@ class StreamMessageInputState extends State<StreamMessageInput>
       );
     }
 
+    // Olivier:
+    // The problem here is that removed attachments that are already in the CDN are not removed from the CDN.
+    // For images, the imageUrl is not empty
+    // For files, the assetUrl is not empty
+    // Need to check as attaxchment update remove the previous attachment without going in this function
+    if (attachment.imageUrl != null || attachment.assetUrl != null) {
+      _attachmentsToRemove.add(attachment.copyWith());
+    }
     _effectiveController.removeAttachmentById(attachment.id);
   }
 
@@ -1331,8 +1344,35 @@ class StreamMessageInputState extends State<StreamMessageInput>
     }
   }
 
+  Future<void> _deleteAttachments(List<Attachment> attachments) async {
+    final streamChannel = StreamChannel.of(context);
+    if (!attachments.isEmpty &&
+        streamChannel.channel.id != null &&
+        streamChannel.channel.type != null) {
+      final client = StreamChat.of(context).client;
+      for (final attachment in attachments) {
+        if (attachment.assetUrl != null) {
+          await client.deleteFile(attachment.assetUrl!,
+              streamChannel.channel.id!, streamChannel.channel.type!);
+        }
+        if (attachment.thumbUrl != null) {
+          await client.deleteImage(attachment.thumbUrl!,
+              streamChannel.channel.id!, streamChannel.channel.type!);
+        }
+
+        if (attachment.imageUrl != null) {
+          await client.deleteImage(attachment.imageUrl!,
+              streamChannel.channel.id!, streamChannel.channel.type!);
+        }
+      }
+      attachments.clear();
+    }
+  }
+
   /// Sends the current message
   Future<void> sendMessage() async {
+    await _deleteAttachments(_attachmentsToRemove);
+
     if (_timeOut > 0 ||
         (_effectiveController.text.trim().isEmpty &&
             _effectiveController.attachments.isEmpty)) {
