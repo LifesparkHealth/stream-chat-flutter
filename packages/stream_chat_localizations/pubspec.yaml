@@ -17,7 +17,7 @@ dependencies:
   stream_chat_flutter: 
     git: 
       url: git@github.com:LifesparkHealth/stream-chat-flutter.git
-      ref: '97be1ca7f921395c5ccf65950fc43b46e12040ee'
+      ref: 'master'
       path: packages/stream_chat_flutter
 
 dev_dependencies:
